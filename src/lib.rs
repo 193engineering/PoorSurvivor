@@ -2,6 +2,10 @@
 mod alloc;
 mod wasm4;
 mod game;
+mod common;
+mod player;
+mod enemy;
+mod weapons;
 use std::sync::Mutex;
 use once_cell::sync::Lazy;
 use game::Game;
