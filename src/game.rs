@@ -1,8 +1,15 @@
+use std::cmp::min;
+
+use crate::sprites::MAGICIAN_IMAGE;
 use crate::wasm4::*;
 use crate::common::*;
 use crate::player::Player;
 use crate::enemy::Enemy;
 use crate::weapons::*;
+
+
+const SPONE_LEVEL: u32 = 30;
+const SPONE_PERIODS: [u32; 6] = [120, 110, 90, 70, 50, 30];
 
 static mut PREVIOUS_GAMEPAD: u8 = 0;
 static mut FRAME: u64 = 0;
@@ -21,7 +28,7 @@ pub struct Game{
     player: Player,
     enemies: Vec<Enemy>,
     bullets: Vec<Bullet>,
-    clock: u64,
+    clock: u32,
     timers: Vec<Timer>,
     attack_timer: Timer,
     best_score: u32,
@@ -56,6 +63,7 @@ impl Game{
         self.parse_input();
         match self.scene {
             Scene::Title => {
+                unsafe { *DRAW_COLORS = 3 }
                 text("-------------", 30, 30);
                 text("Poor Survivor", 30, 40);
                 text("-------------", 30, 50);
@@ -68,14 +76,15 @@ impl Game{
                 self.timer_event();
                 self.hits();
 
-                text(format!("TIME:{} LIFE:{}", self.clock, self.player.life), 0, 2);
-                text(format!("SCORE:{} LEVEL:{}", self.score, self.player.level+1), 0, 10);
+                text(format!("LIFE:{} LEVEL:{}   {:>03}", self.player.life, self.player.level+1, self.clock), 0, 2);
+                text(format!("SCORE:{}", self.score), 0, 10);
 
                 match self.player.invincible {
-                    true => unsafe { *DRAW_COLORS = 4 }
-                    false => unsafe { *DRAW_COLORS = 2 }
+                    true => unsafe { *DRAW_COLORS = 0x3230 }
+                    false => unsafe { *DRAW_COLORS = 0x2320 }
                 }
-                oval(self.player.g.x as i32, self.player.g.y as i32, self.player.g.w, self.player.g.h);
+                MAGICIAN_IMAGE.draw(self.player.g.x as i32, self.player.g.y as i32, 0);
+                // oval(self.player.g.x as i32, self.player.g.y as i32, self.player.g.w, self.player.g.h);
                 unsafe { *DRAW_COLORS = 4 }
                 for e in &self.enemies {
                     oval(e.g.x as i32, e.g.y as i32, e.g.w, e.g.h);
@@ -85,8 +94,9 @@ impl Game{
                 }
             }
             Scene::Gameover => {
-                text("GAME OVER", 40, 60);
-                text(format!("SCORE: {:8}", self.score), 20, 80);
+                unsafe { *DRAW_COLORS = 4 }
+                text("GAME OVER", 40, 40);
+                text(format!("SCORE: {:6}", self.score), 26, 70);
                 text("[X] TITLE", 40, 110);
                 text("[Z] RETRY", 40, 120);
             }
@@ -134,14 +144,22 @@ impl Game{
             match timer.tag.as_str() {
                 "1sec" => match timer.tick() {
                     TimerState::Yet => (),
-                    TimerState::Notice => self.clock += 1,
+                    TimerState::Notice => {
+                        self.clock += 1;
+                    }
                 }
 
-                "spone" => match timer.tick() {
-                    TimerState::Yet => (),
-                    TimerState::Notice => {
-                        self.enemies.push(Enemy::new(unsafe{FRAME}));
-                    },
+                "spone" => {
+                    if 0 == self.clock % SPONE_LEVEL {
+                        let i = min((self.clock/SPONE_LEVEL) as usize, SPONE_PERIODS.len()-1);
+                        timer.period = SPONE_PERIODS[i];
+                    }
+                    match timer.tick() {
+                        TimerState::Yet => (),
+                        TimerState::Notice => {
+                            self.enemies.push(Enemy::new(unsafe{FRAME}));
+                        },
+                    }
                 }
 
                 "enemy_move" => match timer.tick() {

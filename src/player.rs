@@ -1,6 +1,6 @@
 use crate::{common::Geometry, wasm4::*};
 
-const LEVEL:[u32; 10] = [0, 300, 600, 1000, 2000, 3000, 5000, 70000, 10000, 20000];
+const LEVEL:[u32; 10] = [0, 300, 600, 1000, 1500, 2600, 3500, 5000, 8000, 15000];
 
 #[allow(dead_code, unused)]
 #[derive(Clone)]
@@ -15,8 +15,8 @@ pub struct Player {
 
 impl Player {
     pub fn new() -> Self {
-        let width: i32 = 7;
-        let height: i32 = 15;
+        let width: i32 = 13;
+        let height: i32 = 13;
         Self { 
             g: Geometry { 
                 x: (SCREEN_SIZE as i32 / 2 - width/2) as f32,

@@ -6,6 +6,7 @@ mod common;
 mod player;
 mod enemy;
 mod weapons;
+mod sprites;
 use std::sync::Mutex;
 use once_cell::sync::Lazy;
 use game::Game;

@@ -1,0 +1,29 @@
+use crate::wasm4::*;
+
+pub struct Image<'a> {
+    w: u32,
+    h: u32,
+    flags: u32,
+    data: &'a[u8],
+}
+
+impl Image<'_> {
+    pub fn draw(&self, x: i32, y: i32, flags: u32){
+        blit(self.data, x, y, self.w, self.h, self.flags | flags);
+    }
+}
+
+
+// magician_mini2
+const MAGICIAN_MINI2_WIDTH: u32 = 13;
+const MAGICIAN_MINI2_HEIGHT: u32 = 13;
+const MAGICIAN_MINI2_FLAGS: u32 = 1; // BLIT_2BPP
+const MAGICIAN_MINI2: [u8; 43] = [ 0x00,0x0a,0xa8,0x0a,0x8a,0xa8,0x08,0x9a,0xaa,0x82,0x16,0xaa,0x20,0x2a,0x80,0x2a,0x89,0xaa,0xaa,0x02,0x62,0x08,0xa0,0xaa,0x00,0xa8,0x22,0xaa,0xaa,0x08,0x9a,0xa6,0x80,0xaa,0xaa,0xa0,0x29,0xaa,0x68,0x0a,0x6a,0x98,0x00 ];
+
+
+pub const MAGICIAN_IMAGE: Image = Image {
+    w: MAGICIAN_MINI2_WIDTH,
+    h: MAGICIAN_MINI2_HEIGHT,
+    flags: MAGICIAN_MINI2_FLAGS,
+    data: &MAGICIAN_MINI2,
+};
