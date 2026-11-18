@@ -1,5 +1,6 @@
 use std::cmp::min;
 
+use crate::music::*;
 use crate::sprites::MAGICIAN_IMAGE;
 use crate::wasm4::*;
 use crate::common::*;
@@ -122,6 +123,7 @@ impl Game{
             if !self.player.invincible{
                 if hit(self.player.g, e.g) {
                     self.player.life -= 1;
+                    play(SE_DAMAGE);
                     if 0 == self.player.life {
                         self.scene = Scene::Gameover;
                         if self.best_score < self.score {
@@ -197,6 +199,7 @@ impl Game{
                     }
                 }
                 self.bullets.push(Bullet::new(self.player.g, target));
+                play(SE_SHOT);
             }
         }
 
