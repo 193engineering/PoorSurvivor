@@ -1,5 +1,6 @@
 use crate::{common::Geometry, wasm4::SCREEN_SIZE};
 
+#[allow(unused)]
 pub struct Bullet {
     pub g: Geometry,
     pub speed: f32,
@@ -9,7 +10,7 @@ pub struct Bullet {
     pub damage: i32,
 }
 
-#[allow(dead_code, unused)]
+#[allow(unused)]
 impl Bullet {
     pub fn new(start: Geometry, target: Geometry) -> Self {
         let (start_x, start_y) = start.center();

@@ -21,8 +21,8 @@ impl Enemy {
         let rad = d/180. * PI;
         Self {
             g: Geometry {
-                x: 80. * rad.cos() + 80.,
-                y: 80. * rad.sin() + 80.,
+                x: 120. * rad.cos() + 80.,
+                y: 120. * rad.sin() + 80.,
                 w: size,
                 h: size,
             },

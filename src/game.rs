@@ -9,7 +9,14 @@ static mut FRAME: u64 = 0;
 
 
 //------------------------------------------------------------------------
+enum Scene {
+    Title,
+    Play,
+    Gameover,
+}
+
 pub struct Game{
+    scene: Scene,
     score: u32,
     player: Player,
     enemies: Vec<Enemy>,
@@ -17,6 +24,7 @@ pub struct Game{
     clock: u64,
     timers: Vec<Timer>,
     attack_timer: Timer,
+    best_score: u32,
 }
 
 
@@ -29,57 +37,58 @@ impl Game{
             Timer::new("enemy_move".to_string(), 5),
             Timer::new("invincible".to_string(), 60),
         ];
-        let mut game = Self { 
+        let game = Self { 
+            scene: Scene::Title,
             score: 0,
             player: player.clone(),
             enemies: vec![],
             bullets: vec![],
             clock: 0,
             timers: timers,
-            attack_timer: Timer::new("bullet".to_string(), player.attack_rate)
+            attack_timer: Timer::new("bullet".to_string(), player.attack_rate),
+            best_score: 0,
         };
-        for timer in game.timers.iter_mut() {
-            if "invincible" != timer.tag {
-                timer.start(false);
-            }
-        }
-        game.attack_timer.start(false);
 
         game
     }
 
     pub fn update(&mut self){
-        if 0 == self.player.life {
-            text("GAME OVER", 40, 60);
-            text(format!("SCORE: {:8}", self.score), 20, 80);
-            text("Press Z to retry...", 5, 120);
-            unsafe {
-                if *GAMEPAD1 & BUTTON_2 != 0 {
-                    self.reset();
+        self.parse_input();
+        match self.scene {
+            Scene::Title => {
+                text("-------------", 30, 30);
+                text("Poor Survivor", 30, 40);
+                text("-------------", 30, 50);
+                text(format!("BEST: {:5}", self.best_score), 35, 80);
+                text("Press X to start!", 15, 120);
+            }
+            Scene::Play => {
+                unsafe { *DRAW_COLORS = 3 }
+                unsafe { FRAME = FRAME.wrapping_add(1) };
+                self.timer_event();
+                self.hits();
+
+                text(format!("TIME:{} LIFE:{}", self.clock, self.player.life), 0, 2);
+                text(format!("SCORE:{} LEVEL:{}", self.score, self.player.level+1), 0, 10);
+
+                match self.player.invincible {
+                    true => unsafe { *DRAW_COLORS = 4 }
+                    false => unsafe { *DRAW_COLORS = 2 }
+                }
+                oval(self.player.g.x as i32, self.player.g.y as i32, self.player.g.w, self.player.g.h);
+                unsafe { *DRAW_COLORS = 4 }
+                for e in &self.enemies {
+                    oval(e.g.x as i32, e.g.y as i32, e.g.w, e.g.h);
+                }
+                for b in &self.bullets {
+                    oval(b.g.x as i32, b.g.y as i32, b.g.w, b.g.h);
                 }
             }
-        }
-        else{
-            unsafe { *DRAW_COLORS = 4 }
-            unsafe { FRAME = FRAME.wrapping_add(1) };
-            self.timer_event();
-            self.parse_input();
-            self.hits();
-
-            text(format!("TIME:{} LIFE:{}", self.clock, self.player.life), 0, 2);
-            text(format!("SCORE:{} LEVEL:{}", self.score, self.player.level+1), 0, 10);
-
-            match self.player.invincible {
-                true => unsafe { *DRAW_COLORS = 4 }
-                false => unsafe { *DRAW_COLORS = 2 }
-            }
-            oval(self.player.g.x as i32, self.player.g.y as i32, self.player.g.w, self.player.g.h);
-            unsafe { *DRAW_COLORS = 4 }
-            for e in &self.enemies {
-                oval(e.g.x as i32, e.g.y as i32, e.g.w, e.g.h);
-            }
-            for b in &self.bullets {
-                oval(b.g.x as i32, b.g.y as i32, b.g.w, b.g.h);
+            Scene::Gameover => {
+                text("GAME OVER", 40, 60);
+                text(format!("SCORE: {:8}", self.score), 20, 80);
+                text("[X] TITLE", 40, 110);
+                text("[Z] RETRY", 40, 120);
             }
         }
     }
@@ -103,6 +112,13 @@ impl Game{
             if !self.player.invincible{
                 if hit(self.player.g, e.g) {
                     self.player.life -= 1;
+                    if 0 == self.player.life {
+                        self.scene = Scene::Gameover;
+                        if self.best_score < self.score {
+                            self.best_score = self.score;
+                        }
+                        return;
+                    }
                     self.player.invincible = true;
                     self.timers.iter_mut().filter(|t| t.tag.as_str() == "invincible").for_each(|t| t.start(true));
                     break;
@@ -181,17 +197,36 @@ impl Game{
             (pressed_this_frame, gamepad, previous)
         };
 
-        if gamepad & BUTTON_RIGHT != 0 {
-            self.player.g.x += 1.;
-        }
-        if gamepad & BUTTON_LEFT != 0 {
-            self.player.g.x -= 1.;
-        }
-        if gamepad & BUTTON_DOWN != 0 {
-            self.player.g.y += 1.;
-        }
-        if gamepad & BUTTON_UP != 0 {
-            self.player.g.y -= 1.;
+        match self.scene {
+            Scene::Title => {
+                if pressed_this_frame & BUTTON_1 != 0 {
+                    self.reset();
+                    self.scene = Scene::Play;
+                }
+            }
+            Scene::Play => {
+                if gamepad & BUTTON_RIGHT != 0 && self.player.g.x as u32 + self.player.g.w < SCREEN_SIZE {
+                    self.player.g.x += 1.;
+                }
+                if gamepad & BUTTON_LEFT != 0 && self.player.g.x > 0. {
+                    self.player.g.x -= 1.;
+                }
+                if gamepad & BUTTON_DOWN != 0 && self.player.g.y as u32 + self.player.g.h < SCREEN_SIZE {
+                    self.player.g.y += 1.;
+                }
+                if gamepad & BUTTON_UP != 0 && self.player.g.y > 0. {
+                    self.player.g.y -= 1.;
+                }
+            }
+            Scene::Gameover => {
+                if pressed_this_frame & BUTTON_1 != 0 {
+                    self.scene = Scene::Title;
+                }
+                if pressed_this_frame & BUTTON_2 != 0 {
+                    self.reset();
+                    self.scene = Scene::Play;
+                }
+            }
         }
     }
 
@@ -208,5 +243,6 @@ impl Game{
             }
             timer.start(true);
         }
+        self.attack_timer.start(true);
     }
 }
