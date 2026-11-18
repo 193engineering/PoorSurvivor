@@ -76,7 +76,7 @@ impl Game{
                 self.timer_event();
                 self.hits();
 
-                text(format!("LIFE:{} LEVEL:{:2}  {:>03}", self.player.life, self.player.level+1, self.clock), 0, 2);
+                text(format!("LIFE:{} LEVEL:{:02}  {:>03}", self.player.life, self.player.level+1, self.clock), 0, 2);
                 text(format!("SCORE:{}", self.score), 0, 10);
 
                 match self.player.invincible {
