@@ -1,8 +1,8 @@
 use crate::{common::Geometry, wasm4::*};
 
-const LEVEL:[u32; 10] = [0, 300, 600, 1000, 1500, 2600, 3500, 5000, 8000, 15000];
+const LEVEL:[u32; 10] = [0, 300, 600, 1000, 1500, 2600, 3500, 5000, 10000, 20000];
 
-#[allow(dead_code, unused)]
+#[allow(unused)]
 #[derive(Clone)]
 pub struct Player {
     pub g: Geometry,

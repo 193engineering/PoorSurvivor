@@ -8,7 +8,7 @@ use crate::enemy::Enemy;
 use crate::weapons::*;
 
 
-const SPONE_LEVEL: u32 = 30;
+const SPONE_LEVEL: u32 = 20;
 const SPONE_PERIODS: [u32; 6] = [120, 110, 90, 70, 50, 30];
 
 static mut PREVIOUS_GAMEPAD: u8 = 0;
@@ -76,7 +76,7 @@ impl Game{
                 self.timer_event();
                 self.hits();
 
-                text(format!("LIFE:{} LEVEL:{}   {:>03}", self.player.life, self.player.level+1, self.clock), 0, 2);
+                text(format!("LIFE:{} LEVEL:{:2}  {:>03}", self.player.life, self.player.level+1, self.clock), 0, 2);
                 text(format!("SCORE:{}", self.score), 0, 10);
 
                 match self.player.invincible {
